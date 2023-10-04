@@ -17,6 +17,10 @@
         "symfony/runtime": "6.3.*",
         "symfony/yaml": "6.3.*"
     },
+    "require-dev": {
+        "roave/security-advisories": "dev-latest",
+        "symfony/maker-bundle": "^1.51"
+    },
     "config": {
         "allow-plugins": {
             "php-http/discovery": true,
