@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Helper\Money;
 use App\Repository\LoanRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use RangeException;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -50,7 +52,7 @@ class Loan
             name: 'interest_rate', type: Types::SMALLINT, length: 5,
             options: ['unsigned' => true, 'comment' => 'in basis points'],
         ),
-        Assert\GreaterThan(0),
+        Assert\GreaterThanOrEqual(0),
         Assert\Length(max: 5),
     ]
     private int $interestRate = 0;
@@ -152,14 +154,60 @@ class Loan
         return $this;
     }
 
+    /** @return Collection<Euribor> */
     public function getEuribors(): Collection
     {
         return $this->euribors;
     }
 
-    #[Assert\Callback]
-    public function validate(ExecutionContextInterface $context, mixed $payload): void
+    public function getEuriborForSegment(int $segmentNumber): ?Euribor
     {
-        // TODO: implement validation for collection
+        foreach ($this->getEuribors() as $euribor) {
+            if ($euribor->getSegmentNumber() === $segmentNumber) {
+                return $euribor;
+            }
+        }
+
+        return null;
+    }
+
+    public function getMonthlyInterestValue(): float
+    {
+        return Money::basisPointsToValue(Money::yearlyToMonthly($this->interestRate));
+    }
+
+    public function getAnnuityPayment(): int|float
+    {
+        if ($this->term < 1) {
+            throw new RangeException(sprintf('Loan term "%d" cannot be lower than 1', $this->term));
+        }
+
+        $monthlyInterest = $this->getMonthlyInterestValue();
+
+        return $monthlyInterest > 0
+            ? ($monthlyInterest * $this->amount) / (1 - (1 + $monthlyInterest) ** (-$this->term))
+            : $this->amount / $this->term;
+    }
+
+    #[Assert\Callback]
+    public function validate(ExecutionContextInterface $context): void
+    {
+        $existingSegmentNumbers = new ArrayCollection();
+        foreach ($this->getEuribors() as $index => $euribor) {
+            $segmentNr = $euribor->getSegmentNumber();
+            if ($existingSegmentNumbers->contains($segmentNr)) {
+                $context
+                    ->buildViolation(sprintf(
+                        'Euribor with segment number "%d" already exists in Loan #%s',
+                        $segmentNr,
+                        $this->id ? (string) $this->getId() : 'new',
+                    ))
+                    ->atPath(sprintf('euribor[%d].segmentNumber', $index))
+                    ->addViolation();
+                break;
+            }
+
+            $existingSegmentNumbers->add($segmentNr);
+        }
     }
 }

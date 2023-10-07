@@ -6,13 +6,15 @@ namespace App\Model;
 
 readonly class Payment
 {
+    private int $totalPayment;
+
     public function __construct(
         private int $segmentNumber,
         private int $principalPayment,
         private int $interestPayment,
         private int $euriborPayment,
-        private int $totalPayment,
     ) {
+        $this->totalPayment = $this->principalPayment + $this->interestPayment + $this->euriborPayment;
     }
 
     public function getSegmentNumber(): int
