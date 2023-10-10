@@ -15,4 +15,9 @@ class Money
     {
         return $value / 12;
     }
+
+    public static function roundCents(int|float $cents): int
+    {
+        return (int) round($cents);
+    }
 }

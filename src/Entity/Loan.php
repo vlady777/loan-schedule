@@ -162,13 +162,9 @@ class Loan
 
     public function getEuriborForSegment(int $segmentNumber): ?Euribor
     {
-        foreach ($this->getEuribors() as $euribor) {
-            if ($euribor->getSegmentNumber() === $segmentNumber) {
-                return $euribor;
-            }
-        }
-
-        return null;
+        return $this->euribors
+            ->filter(static fn (Euribor $euribor) => $euribor->getSegmentNumber() === $segmentNumber)
+            ->first() ?: null;
     }
 
     public function getMonthlyInterestValue(): float

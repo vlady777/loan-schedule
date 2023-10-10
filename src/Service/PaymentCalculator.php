@@ -8,56 +8,48 @@ use App\Entity\Loan;
 use App\Exception\PaymentCalculationException;
 use App\Helper\Money;
 use App\Model\Payment;
-use App\Service\Factory\ModelFactory;
 use RangeException;
 
-#[\Symfony\Component\DependencyInjection\Attribute\Autoconfigure(public: true)]
 readonly class PaymentCalculator
 {
-    public function __construct(
-        private ModelFactory $modelFactory,
-    ) {
-    }
-
     /** @return Payment[] */
     public function calculate(Loan $loan): array
     {
         $result = [];
         try {
-            $annuityPayment = $loan->getAnnuityPayment();
+            $annuityPayment = Money::roundCents($loan->getAnnuityPayment());
         } catch (RangeException $e) {
             throw new PaymentCalculationException($e->getMessage());
         }
 
+        $remainingAmount = $loan->getAmount();
+        if ($remainingAmount === 0) {
+            return $result;
+        }
+
+        $term = $loan->getTerm();
         $monthlyInterest = $loan->getMonthlyInterestValue();
         $monthlyEuribor = Money::basisPointsToValue(Money::yearlyToMonthly($loan->getDefaultEuriborRate()));
-        $remainingAmount = $loan->getAmount();
-        for ($segmentNr = 1; $segmentNr <= $loan->getTerm(); $segmentNr++) {
+        for ($segmentNr = 1; $segmentNr <= $term; $segmentNr++) {
             if (($segmentEuribor = $loan->getEuriborForSegment($segmentNr)) !== null) {
                 $monthlyEuribor = Money::basisPointsToValue(Money::yearlyToMonthly($segmentEuribor->getRate()));
             }
 
-            $interest = $remainingAmount * $monthlyInterest;
-            $euribor = $remainingAmount * $monthlyEuribor;
+            $interest = Money::roundCents($remainingAmount * $monthlyInterest);
+            $euribor = Money::roundCents($remainingAmount * $monthlyEuribor);
             $principal = $annuityPayment - $interest;
+            if ($segmentNr === $term && $principal !== $remainingAmount) {
+                $principal = $remainingAmount;
+            }
 
             $remainingAmount -= $principal;
 
-            $result[] = $this->modelFactory->createPayment(
+            $result[] = new Payment(
                 segmentNumber: $segmentNr,
                 principalPayment: $principal,
                 interestPayment: $interest,
                 euriborPayment: $euribor,
             );
-
-//            echo sprintf(
-//                '%s | %s | %s | %s | %s',
-//                $remainingAmount,
-//                $segmentNr,
-//                round($principal),
-//                round($interest),
-//                round($euribor),
-//            ).PHP_EOL;
         }
 
         return $result;

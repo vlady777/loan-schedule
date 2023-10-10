@@ -19,7 +19,7 @@
         "symfony/yaml": "6.3.*"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5",
+        "phpunit/phpunit": "^10.4",
         "roave/security-advisories": "dev-latest",
         "symfony/browser-kit": "6.3.*",
         "symfony/css-selector": "6.3.*",
