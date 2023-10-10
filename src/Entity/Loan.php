@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Helper\Money;
+use App\Model\Payment;
 use App\Repository\LoanRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -160,29 +161,48 @@ class Loan
         return $this->euribors;
     }
 
+    /** @return Payment[] */
+    public function getPayments(): array
+    {
+        $result = [];
+        if ($this->amount === 0) {
+            return $result;
+        }
+
+        $annuityPayment = Money::roundCents($this->getAnnuityPayment());
+        $monthlyInterest = $this->getMonthlyInterestValue();
+        $monthlyEuribor = Money::basisPointsToValue(Money::yearlyToMonthly($this->defaultEuriborRate));
+        $remainingAmount = $this->amount;
+        for ($segmentNr = 1; $segmentNr <= $this->term; $segmentNr++) {
+            if (($segmentEuribor = $this->getEuriborForSegment($segmentNr)) !== null) {
+                $monthlyEuribor = Money::basisPointsToValue(Money::yearlyToMonthly($segmentEuribor->getRate()));
+            }
+
+            $interest = Money::roundCents($remainingAmount * $monthlyInterest);
+            $euribor = Money::roundCents($remainingAmount * $monthlyEuribor);
+            $principal = $annuityPayment - $interest;
+            if ($segmentNr === $this->term && $principal !== $remainingAmount) {
+                $principal = $remainingAmount;
+            }
+
+            $remainingAmount -= $principal;
+
+            $result[] = new Payment(
+                segmentNumber: $segmentNr,
+                principalPayment: $principal,
+                interestPayment: $interest,
+                euriborPayment: $euribor,
+            );
+        }
+
+        return $result;
+    }
+
     public function getEuriborForSegment(int $segmentNumber): ?Euribor
     {
         return $this->euribors
             ->filter(static fn (Euribor $euribor) => $euribor->getSegmentNumber() === $segmentNumber)
             ->first() ?: null;
-    }
-
-    public function getMonthlyInterestValue(): float
-    {
-        return Money::basisPointsToValue(Money::yearlyToMonthly($this->interestRate));
-    }
-
-    public function getAnnuityPayment(): int|float
-    {
-        if ($this->term < 1) {
-            throw new RangeException(sprintf('Loan term "%d" cannot be lower than 1', $this->term));
-        }
-
-        $monthlyInterest = $this->getMonthlyInterestValue();
-
-        return $monthlyInterest > 0
-            ? ($monthlyInterest * $this->amount) / (1 - (1 + $monthlyInterest) ** (-$this->term))
-            : $this->amount / $this->term;
     }
 
     #[Assert\Callback]
@@ -205,5 +225,23 @@ class Loan
 
             $existingSegmentNumbers->add($segmentNr);
         }
+    }
+
+    private function getAnnuityPayment(): int|float
+    {
+        if ($this->term < 1) {
+            throw new RangeException(sprintf('Loan term "%d" cannot be lower than 1', $this->term));
+        }
+
+        $monthlyInterest = $this->getMonthlyInterestValue();
+
+        return $monthlyInterest > 0
+            ? ($monthlyInterest * $this->amount) / (1 - (1 + $monthlyInterest) ** (-$this->term))
+            : $this->amount / $this->term;
+    }
+
+    private function getMonthlyInterestValue(): float
+    {
+        return Money::basisPointsToValue(Money::yearlyToMonthly($this->interestRate));
     }
 }

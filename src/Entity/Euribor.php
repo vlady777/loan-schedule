@@ -17,7 +17,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     ORM\Index(name: 'load_id', columns: ['loan_id']),
     UniqueEntity(
         fields: ['loan', 'segmentNumber'], errorPath: 'segmentNumber',
-        message: 'Segment number already exists in Loan',
+        message: 'Euribor with the same segment number already exists in Loan',
     ),
 ]
 class Euribor
