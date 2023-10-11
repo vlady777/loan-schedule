@@ -33,8 +33,8 @@ class Loan
             name: 'amount', type: Types::INTEGER, length: 10,
             options: ['unsigned' => true, 'comment' => 'in cents']
         ),
-        Assert\GreaterThan(0),
-        Assert\Length(max: 10),
+        Assert\GreaterThan(value: 0, message: 'Amount should be greater than 0'),
+        Assert\Length(max: 10, maxMessage: 'Amount is too big. It should have 10 digits or less'),
     ]
     private int $amount = 0;
 
@@ -43,8 +43,8 @@ class Loan
             name: 'term', type: Types::SMALLINT, length: 5,
             options: ['unsigned' => true, 'comment' => 'in months']
         ),
-        Assert\GreaterThan(0),
-        Assert\Length(max: 5),
+        Assert\GreaterThan(value: 0, message: 'Term should be greater than 0'),
+        Assert\Length(max: 5, maxMessage: 'Term is too big. It should have 5 digits or less'),
     ]
     private int $term = 0;
 
@@ -53,8 +53,8 @@ class Loan
             name: 'interest_rate', type: Types::SMALLINT, length: 5,
             options: ['unsigned' => true, 'comment' => 'in basis points'],
         ),
-        Assert\GreaterThanOrEqual(0),
-        Assert\Length(max: 5),
+        Assert\GreaterThanOrEqual(value: 0, message: 'Interest rate should be greater than or equal to 0'),
+        Assert\Length(max: 5, maxMessage: 'Interest rate is too big. It should have 5 digits or less'),
     ]
     private int $interestRate = 0;
 
@@ -63,8 +63,8 @@ class Loan
             name: 'default_euribor_rate', type: Types::SMALLINT, length: 5,
             options: ['unsigned' => true, 'comment' => 'in basis points'],
         ),
-        Assert\GreaterThanOrEqual(0),
-        Assert\Length(max: 5),
+        Assert\GreaterThanOrEqual(value: 0, message: 'Default euribor rate should be greater than or equal to 0'),
+        Assert\Length(max: 5, maxMessage: 'Default euribor rate is too big. It should have 5 digits or less'),
     ]
     private int $defaultEuriborRate = 0;
 

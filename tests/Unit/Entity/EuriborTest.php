@@ -25,7 +25,7 @@ class EuriborTest extends TestCase
         $uniqueEntityArgs = $classAttrs[0]->getArguments();
         self::assertSame(['loan', 'segmentNumber'], $uniqueEntityArgs['fields']);
         self::assertSame('segmentNumber', $uniqueEntityArgs['errorPath']);
-        self::assertSame('Segment number already exists in Loan', $uniqueEntityArgs['message']);
+        self::assertSame('Euribor with the same segment number already exists in Loan', $uniqueEntityArgs['message']);
     }
 
     public function testSetLoan(): void

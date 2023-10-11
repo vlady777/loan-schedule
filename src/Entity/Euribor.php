@@ -31,8 +31,8 @@ class Euribor
 
     #[
         ORM\Column(name: 'segment_number', type: Types::SMALLINT, length: 5, options: ['unsigned' => true]),
-        Assert\GreaterThan(0),
-        Assert\Length(max: 5),
+        Assert\GreaterThan(value: 0, message: 'Segment number should be greater than 0'),
+        Assert\Length(max: 5, maxMessage: 'Segment number is too big. It should have 5 digits or less'),
     ]
     private int $segmentNumber = 0;
 
@@ -41,15 +41,15 @@ class Euribor
             name: 'rate', type: Types::SMALLINT, length: 5,
             options: ['unsigned' => true, 'comment' => 'in basis points']
         ),
-        Assert\GreaterThanOrEqual(0),
-        Assert\Length(max: 5),
+        Assert\GreaterThanOrEqual(value: 0, message: 'Rate should be greater than or equal to 0'),
+        Assert\Length(max: 5, maxMessage: 'Rate is too big. It should have 5 digits or less'),
     ]
     private int $rate = 0;
 
     #[
         ORM\ManyToOne(targetEntity: Loan::class, inversedBy: 'euribors'),
         ORM\JoinColumn(name: 'loan_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE'),
-        Assert\NotNull(message: 'Please provide Loan'),
+        Assert\NotNull(message: 'Loan is missing'),
     ]
     private ?Loan $loan = null;
 
