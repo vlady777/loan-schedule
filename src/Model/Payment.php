@@ -25,7 +25,6 @@ readonly class Payment
         $this->totalPayment = $this->principalPayment + $this->interestPayment + $this->euriborPayment;
     }
 
-
     public function getSegmentNumber(): int
     {
         return $this->segmentNumber;

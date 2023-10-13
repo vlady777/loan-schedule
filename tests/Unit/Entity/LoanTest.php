@@ -44,16 +44,16 @@ class LoanTest extends TestCase
 
         self::assertCount(3, $result = $loan->getEuribors());
         self::assertContains($euribor1, $result);
-        self::assertContains($euribor1, $result);
-        self::assertContains($euribor1, $result);
+        self::assertContains($euribor2, $result);
+        self::assertContains($euribor3, $result);
 
         // try to add duplicate - not allowed
         $loan->addEuribor($euribor2);
 
         self::assertCount(3, $result = $loan->getEuribors());
         self::assertContains($euribor1, $result);
-        self::assertContains($euribor1, $result);
-        self::assertContains($euribor1, $result);
+        self::assertContains($euribor2, $result);
+        self::assertContains($euribor3, $result);
     }
 
     public function testRemoveEuribor(): void
