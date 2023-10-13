@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Helper\Money;
 use App\Model\Payment;
 use App\Repository\LoanRepository;
@@ -12,19 +18,49 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use RangeException;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[
     ORM\Entity(repositoryClass: LoanRepository::class),
     ORM\Table(name: 'loan'),
+    ApiResource(
+        operations: [
+            new GetCollection(normalizationContext: ['groups' => self::GROUP_LIST]),
+            new Get(normalizationContext: ['groups' => self::GROUP_READ]),
+            new Post(
+                denormalizationContext: ['groups' => self::GROUP_WRITE],
+                normalizationContext: ['groups' => self::GROUP_READ]
+            ),
+            new Patch(
+                denormalizationContext: ['groups' => self::GROUP_WRITE],
+                normalizationContext: ['groups' => self::GROUP_READ]
+            ),
+            new Delete(),
+        ],
+    ),
+    ApiResource(
+        shortName: 'Payment',
+        uriTemplate: '/loans/{id}/payments',
+        paginationEnabled: false,
+        operations: [
+            new Get(normalizationContext: ['groups' => self::GROUP_PAYMENT_LIST]),
+        ],
+    ),
 ]
 class Loan
 {
+    private const GROUP_LIST = __CLASS__.':list';
+    private const GROUP_READ = __CLASS__.':read';
+    private const GROUP_WRITE = __CLASS__.':write';
+    public const GROUP_PAYMENT_LIST = __CLASS__.':payment:list';
+
     #[
         ORM\Id,
         ORM\GeneratedValue,
         ORM\Column(name: 'id', type: Types::INTEGER, options: ['unsigned' => true]),
+        Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_PAYMENT_LIST]),
     ]
     private ?int $id = null;
 
@@ -35,6 +71,7 @@ class Loan
         ),
         Assert\GreaterThan(value: 0, message: 'Amount should be greater than 0'),
         Assert\Length(max: 10, maxMessage: 'Amount is too big. It should have 10 digits or less'),
+        Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_WRITE]),
     ]
     private int $amount = 0;
 
@@ -45,6 +82,7 @@ class Loan
         ),
         Assert\GreaterThan(value: 0, message: 'Term should be greater than 0'),
         Assert\Length(max: 5, maxMessage: 'Term is too big. It should have 5 digits or less'),
+        Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_WRITE]),
     ]
     private int $term = 0;
 
@@ -55,6 +93,7 @@ class Loan
         ),
         Assert\GreaterThanOrEqual(value: 0, message: 'Interest rate should be greater than or equal to 0'),
         Assert\Length(max: 5, maxMessage: 'Interest rate is too big. It should have 5 digits or less'),
+        Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_WRITE]),
     ]
     private int $interestRate = 0;
 
@@ -65,6 +104,7 @@ class Loan
         ),
         Assert\GreaterThanOrEqual(value: 0, message: 'Default euribor rate should be greater than or equal to 0'),
         Assert\Length(max: 5, maxMessage: 'Default euribor rate is too big. It should have 5 digits or less'),
+        Groups([self::GROUP_LIST, self::GROUP_READ, self::GROUP_WRITE]),
     ]
     private int $defaultEuriborRate = 0;
 
@@ -73,7 +113,9 @@ class Loan
             targetEntity: Euribor::class, mappedBy: 'loan', fetch: 'EXTRA_LAZY',
             cascade: ['persist', 'remove'], orphanRemoval: true,
         ),
+        ORM\OrderBy(['segmentNumber' => 'ASC']),
         Assert\Valid,
+        Groups([self::GROUP_LIST, self::GROUP_READ]),
     ]
     private Collection $euribors;
 
@@ -162,6 +204,7 @@ class Loan
     }
 
     /** @return Payment[] */
+    #[Groups([self::GROUP_PAYMENT_LIST])]
     public function getPayments(): array
     {
         $result = [];
