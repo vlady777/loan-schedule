@@ -1,0 +1,51 @@
+version: '3.8'
+
+volumes:
+  cache:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+
+services:
+  php:
+    container_name: loan_php
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    build:
+      context: docker/php
+    ports:
+      - '8010:8010'
+    volumes:
+      - ./docker/php/conf.d/memory_limit.ini:/usr/local/etc/php/conf.d/memory_limit.ini
+      - ./docker/php/conf.d/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+      - ./:/app
+      - cache:/app/var/cache
+    links:
+      - mysql
+    networks:
+      - shared_network
+    command: sh -c "symfony server:ca:install && symfony server:start --port 8010"
+  mysql:
+    platform: linux/x86_64 # Required for M1 (Apple Silicon) mac processor
+    image: mysql:8.0.31
+    container_name: loan_mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: loan_schedule
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -uroot -proot
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    ports:
+      - 3316:3306
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
+    name: loan_shared_network
