@@ -1,16 +1,11 @@
 # Loan schedule API homework implementation
 
----
 It's my implementation for the [task](https://github.com/lande-finance/home-task-doc) using Docker, PHP 8.2, Mysql 8, 
 Symfony 6.3, type hinting with enabled strict mode, DDD, etc.
 
 Project directory structure is a fully standard.
 
----
-
 ## Setup and run
-
----
 
 Clone project using terminal
 ```shell
@@ -28,11 +23,7 @@ Wait until message `API is ready to use. You are inside the container.`.
 
 That's it.
 
----
-
-## API documentation 
-
----
+## API documentation
 
 Open browser, go to the https://localhost:8010/ and confirm security exclusion. This is the main page of the API 
 documentation. Here you can see all available API endpoints and send requests to any of them directly from UI 
@@ -58,11 +49,8 @@ Example of request body create new Euribor for Loan #1
 }
 ```
 
----
-
 ## Testing, useful commands
 
----
 Execute commands in terminal (inside container).
 
 Run all test
@@ -86,12 +74,8 @@ Display all routes
 php bin/console debug:router
 ```
 
-
----
-
 ## If something went wrong during `startup.sh` script you can set up project manually.
 
----
 1. Create containers 
 ```shell
 docker compose up -d
