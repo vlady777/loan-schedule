@@ -40,7 +40,7 @@ Example of request body to create new Loan:
   "defaultEuriborRate": 394
 }
 ```
-Example of request body create new Euribor for Loan #1
+Example of request body to create new Euribor for Loan #1
 ```json
 {
   "segmentNumber": 6,
@@ -63,7 +63,7 @@ php bin/phpunit tests/Unit/
 ```
 Run functional-tests only
 ```shell
-bin/phpunit tests/Functional/
+php bin/phpunit tests/Functional/
 ```
 Validate database schema and fields mapping
 ```shell

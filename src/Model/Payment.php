@@ -15,10 +15,13 @@ readonly class Payment
     public function __construct(
         #[Groups([Loan::GROUP_PAYMENT_LIST])]
         private int $segmentNumber,
+
         #[Groups([Loan::GROUP_PAYMENT_LIST])]
         private int $principalPayment,
+
         #[Groups([Loan::GROUP_PAYMENT_LIST])]
         private int $interestPayment,
+
         #[Groups([Loan::GROUP_PAYMENT_LIST])]
         private int $euriborPayment,
     ) {

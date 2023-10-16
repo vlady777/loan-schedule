@@ -34,7 +34,6 @@ final class Version20231004224229 extends AbstractMigration
                 CONSTRAINT `FK_euribor__loan_id__loan__loan_id` FOREIGN KEY (`loan_id`) 
                     REFERENCES `loan` (`id`) ON UPDATE NO ACTION ON DELETE CASCADE
             ) ENGINE=InnoDB;
-
         ");
     }
 
